@@ -45,11 +45,38 @@ module.exports = function(app, express) {
       });
     });
 
+  // app.route('/api/pulls')
+  //   .get('/repo/pulls', function(req, res) {
+  //   // example request url:
+  //   //    http://localhost:3000/repo/pulls?repo=DapperArgentina&owner=photogenic-wound
+  //   utils.getPullRequestsAsync(req.session.userHandle, req.query.repo, req.query.owner)
+  //   .then(function(data) {
+  //     var pulls = utils.formatPulls(data);
+  //     _.forEach(pulls, function(pull) {
+  //       Pulls.makePullByUserAsync(pull, req.session.userHandle);
+  //     });
+  //   })
+  //   .catch(function(err) {
+  //     console.log(err);
+  //   });
+  //   res.send('pulls');
+  // });
+
   app.route('/api/favorite')
     .get(function(req, res) {
       FaveRepos.getFavoritedReposAsync(req.session.userHandle)
       .then((faveRepos) => {
-        console.log('got all favorites');
+        if(!faveRepos.empty) {
+          let getPulls = _.mapValues(faveRepos, (repoId, repo) => {
+            return utils.getPullRequestsAsync(req.session.userHandle, repo.name, repo.org_name);
+          });
+          Promise.all(getPulls)
+          .then(function(data) {
+            Object.keys(faveRepos).forEach((repoId, index) => {
+              faveRepos.pulls = utils.formatPulls(data[index]);
+            });
+          });
+        }
         res.send(faveRepos);
       })
     })
@@ -131,19 +158,5 @@ module.exports = function(app, express) {
     }).catch(console.log);
   });
 
-  app.get('/repo/pulls', function(req, res) {
-    // example request url:
-    //    http://localhost:3000/repo/pulls?repo=DapperArgentina&owner=photogenic-wound
-    utils.getPullRequestsAsync(req.session.userHandle, req.query.repo, req.query.owner)
-    .then(function(data) {
-      var pulls = utils.formatPulls(data);
-      _.forEach(pulls, function(pull) {
-        Pulls.makePullByUserAsync(pull, req.session.userHandle);
-      });
-    })
-    .catch(function(err) {
-      console.log(err);
-    });
-    res.send('pulls');
-  });
+ 
 }
