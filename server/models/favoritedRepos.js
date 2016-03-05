@@ -24,7 +24,7 @@ FavoritedRepos.prototype.getFavoritedReposAsync = function(userHandle, forceRefr
            		this._favoritedRepos = {empty: true};
               var RowDataArray = Object.keys(results[0]).map(k => results[0][k]);
               RowDataArray.forEach(RowData => {
-              	this._favoritedRepos.empty) ? delete this._favoritedRepos.empty: null;
+              	this._favoritedRepos.empty ? delete this._favoritedRepos.empty: null;
                 var regObj = {};
                 Object.keys(RowData).forEach(key => regObj[key] = RowData[key]);
                 this._favoritedRepos[regObj.id] = regObj;

@@ -1,3 +1,5 @@
+"use strict";
+
 var request = require('request');
 var config = require('../config');
 var _ = require('lodash');
@@ -25,7 +27,7 @@ module.exports = function(app, express) {
     });
 
   app.route('/api/issues')
-    .get(function(req, res) {
+    .get((req, res) => {
       Issues.getIssues()
       .then((results) => res.send(results))
       .catch((err) => {
@@ -36,7 +38,7 @@ module.exports = function(app, express) {
     });
 
   app.route('/api/repos')
-    .get(function(req, res){
+    .get((req, res) => {
       Repos.getRepos()
       .then((results) => res.send(results))
       .catch(() => {
@@ -71,7 +73,7 @@ module.exports = function(app, express) {
             return utils.getPullRequestsAsync(req.session.userHandle, repo.name, repo.org_name);
           });
           Promise.all(getPulls)
-          .then(function(data) {
+          .then((data) => {
             Object.keys(faveRepos).forEach((repoId, index) => {
               faveRepos.pulls = utils.formatPulls(data[index]);
             });
@@ -80,7 +82,7 @@ module.exports = function(app, express) {
         res.send(faveRepos);
       })
     })
-    .post(function(req, res) {
+    .post((req, res) => {
       FaveRepos.insertFavoritedRepoAsync(req.body.id, req.session.userHandle)
       .then(() => {
         console.log(req.body.id, req.session.userHandle);
@@ -97,7 +99,7 @@ module.exports = function(app, express) {
 
 
   app.route('/api/user')
-    .get(function(req, res){
+    .get((req, res) => {
       console.log('getting user');
       User.getUserAsync(req.session.userHandle)
       .then((userObj) => {
@@ -106,7 +108,7 @@ module.exports = function(app, express) {
     })
 
   // Kills the user session on logout
-  app.get('/logout', function(req, res) {
+  app.get('/logout', (req, res) => {
     if(req.session.user) {
       req.session.destroy(console.log);
       res.redirect('https://github.com/logout');
@@ -116,18 +118,18 @@ module.exports = function(app, express) {
   });
 
   // GitHub redirects user to /login/auth endpoint after login
-  app.get('/login/auth', function(req, res) {
+  app.get('/login/auth', (req, res) => {
     req.session.user = true;
 
     // Make initial request to GitHub OAuth for access token
     utils.getAccessTokenAsync(req.query.code)
-    .then(function(result) {
+    .then( (result) => {
       var access_token = result.body;
       req.session.access_token = access_token;
 
       // Make request to github for current user information
       utils.getUserInfoAsync(access_token)
-      .then(function(result) {
+      .then( (result) => {
         // Format user object so that it can be consumed by mysql
         var userObj = utils.formatUserObj(JSON.parse(result.body));
         req.session.userHandle = userObj.login;
@@ -135,12 +137,12 @@ module.exports = function(app, express) {
 
         // Check if current user exists in the db
         User.getUserAsync(userObj.login)
-        .then(function(user) {
+        .then( (user) => {
 
           if (user.login === undefined) {
             // If user is not in db, insert new user
             User.makeNewUserAsync(userObj)
-            .then(function(data) {
+            .then( (data) => {
               console.log('new user created in db: ', data);
               res.redirect('/')
             }).catch(console.log);
@@ -148,7 +150,7 @@ module.exports = function(app, express) {
 
             // If user is currently in db, update user data
             User.updateUserAsync(userObj)
-            .then(function(data) {
+            .then( (data) => {
               console.log('updated user in db: ', data);
               res.redirect('/')
             }).catch(console.log);
